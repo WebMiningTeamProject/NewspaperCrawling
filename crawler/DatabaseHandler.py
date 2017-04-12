@@ -18,7 +18,7 @@ class DatabaseHandler:
             self.db.autocommit(False)
             self.logger.debug(
                 'Connected to database %s on %s with user %s' %
-                (db, host, user)
+                (db, host, user))
         except MySQLdb.Error as e:
             self.logger.error(
                 "Error while establishing connection to the database server [%d]: %s"
