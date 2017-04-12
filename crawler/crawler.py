@@ -34,7 +34,8 @@ def load_config(config_file):
     """
     cparser = configparser.ConfigParser()
     try:
-        return cparser.read(config_file)
+        cparser.read(config_file)
+        return cparser
     except Exception as exc:
         print(exc)
         sys.exit(1)
@@ -62,10 +63,10 @@ def main():
     conf = load_config(config_file)
     init_logging(conf['DEFAULT']['LogPath'])
     dh = DatabaseHandler(
-        host=conf['Database']['Host'],
-        user=conf['Database']['User'],
-        password=conf['Database']['Password'],
-        db= conf['Database']['DB']
+        host=conf['DATABASE']['Host'],
+        user=conf['DATABASE']['User'],
+        password=conf['DATABASE']['Password'],
+        db= conf['DATABASE']['DB']
     )
 
 
