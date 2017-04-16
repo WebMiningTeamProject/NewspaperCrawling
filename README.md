@@ -1,6 +1,9 @@
 # NewspaperCrawling
 Crawling Articles from Newspapers
 
+## needed
++ get_rss_providers method from DatbaseHandler class
+
 ## Process
 0. enter list of RSS sources in DB
 0. Crawl RSS feeds of given resources
