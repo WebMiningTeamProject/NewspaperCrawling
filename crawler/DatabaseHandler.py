@@ -2,8 +2,8 @@ import logging
 import sys
 import warnings
 
-#import MySQLdb
-#import MySQLdb.cursors
+import MySQLdb
+import MySQLdb.cursors
 import _mysql
 
 
@@ -12,24 +12,23 @@ class DatabaseHandler:
     def __init__(self, host, user, password, db):
         self.logger = logging.getLogger()
         try:
-            self.db = _mysql.connect(
+            self.db = MySQLdb.connect(
                 host, user, password, db)
              
             warnings.filterwarnings("error", category=_mysql.Warning)
-            #self.cnx = self.db.cursor()
-            #self.db.autocommit(False)
+            self.cnx = self.db.cursor()
+            self.db.autocommit(False)
             self.logger.debug(
                 'Connected to database %s on %s with user %s' %
                 (db, host, user))
-        except _mysql.Error as e:
+        except MySQLdb.Error as e:
             self.logger.error(
                 "Error while establishing connection to the database server [%d]: %s"
                 % (e.args[0], e.args[1]))
             sys.exit(1)
 
     def close(self):
-        #self.cnx.close()
-        #self.db.close()
+        self.cnx.close()
         self.db.close()
         self.logger.debug('Closed DB connection')
     
@@ -56,16 +55,23 @@ class DatabaseHandler:
             ['`%s`' % column for column in columns]) \
             + ') VALUES\n' + ',\n'.join(tuples)
 
+
+    ##Build select satement without constraints
+    def buidlSelectSql(self,databaseName, tableName):
+        statement = 'SELECT * FROM`' + tableName + ';'
+        resultSet = self.__execute(databaseName, statement)
+        return resultSet;
+
     def __execute(self, statement):
         if statement:
             try:
                 self.logger.debug('Executing SQL-query:\n\t%s'
                                   % statement.replace('\n', '\n\t'))
                 self.db.select_db(databaseName)
-                self.db.query(statement)                  #self.cnx.execute(statement)
-            except _mysql.Warning as e:
+                self.cnx.execute(statement)
+            except MySQLdb.Warning as e:
                 self.logger.warn("Warning while executing statement: %s" % e)
-            except _mysql.Error as e:
+            except MySQLdb.Error as e:
                 self.logger.error("Error while executing statement [%d]: %s"
                                   % (e.args[0], e.args[1]))
                 self.close()
@@ -77,10 +83,10 @@ class DatabaseHandler:
                 self.logger.debug('Executing SQL-query:\n\t%s'
                               % statement.replace('\n', '\n\t'))
                 self.db.select_db(databaseName)
-                self.db.query(statement)                  #self.cnx.execute(statement)
-            except _mysql.Warning as e:
+                self.cnx.execute(statement)
+            except MySQLdb.Warning as e:
                 self.logger.warn("Warning while executing statement: %s" % e)
-            except _mysql.Error as e:
+            except MySQLdb.Error as e:
                 self.logger.error("Error while executing statement [%d]: %s"
                                   % (e.args[0], e.args[1]))
                 self.close()
@@ -97,6 +103,7 @@ class DatabaseHandler:
     def readRSSProvider(self):
         return self.buidlSelectSql('webmining', 'NewsProvider')
 
+    ##Insert RSSProvider
     def insertRSSProvider(self, providerList):
         if len(providerList) == 0:
             return
@@ -105,13 +112,9 @@ class DatabaseHandler:
         self.logger.debug('Executed SQL-query:\n\t%s'
                             % statement.replace('\n', '\n\t'))
 
-
-
-    ##Execute
-    def buidlSelectSql(self,databaseName, tableName):
-        statement = 'SELECT * FROM`' + tableName + ';'
-        resultSet = self.__execute(databaseName, statement)
-        return resultSet;
+    #Read articles
+    def readArticles(self):
+        return self.buidlSelectSql('webmining', 'Articles')
 
 
 
@@ -120,6 +123,8 @@ def main():
     print("main code")
     handler = DatabaseHandler("ec2-52-57-13-180.eu-central-1.compute.amazonaws.com", "webmining", "asN5O$YVZch-$vyFEN^*", "webmining")
     handler.readRSSProvider()
+    handler.readArticles()
+
 if __name__ == "__main__":main()
 
 
