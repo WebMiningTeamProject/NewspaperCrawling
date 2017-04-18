@@ -78,33 +78,41 @@ class DatabaseHandler:
                 sys.exit(1)
 
 
-    def persistInsert_dict(self, table, array_of_dicts):
+    def persistDict(self, table, array_of_dicts):
         sql = self.__buildInsertSql(table, array_of_dicts)
         self.__execute(sql)
         self.db.commit()
 
-    def persistSelect(self, table):
+    def select(self, table):
         sql = self.__buildSelectSql(table)
         resultSet = self.__execute(sql)
         self.db.commit()
         return resultSet
 
 
-    #Get all RSSProvider
-    def readRSSProvider(self):
-        return self.persistSelect('NewsProvider')
+    def persistNewsProvider(self, providerList):
+        """
+        This function persists NewsProviders
+        :param providerList: an array of NewsProviders
+        """
+        if not len(providerList) == 0:
+            self.persistDict('NewsProvider', [provider.__dict__ for provider in providerList])
 
-    #Insert RSSProvider
-    def insertRSSProvider(self, providerList):
-        if len(providerList) == 0:
-            return
-        statement = self.__buildInsertSql('NewsProvider', providerList)
-        self.__execute(statement)
-        self.logger.debug('Executed SQL-query:\n\t%s'
-                            % statement.replace('\n', '\n\t'))
+    def persistNewsArticle(self, articleList):
+        """
+        This function persists NewsArticles
+        :param articleList: an array of NewsArticles
+        """
+        if not len(articleList) == 0:
+            self.persistDict('NewsArticle', [article.__dict__ for article in articleList])
+
+    # Get all RSSProvider
+    def readRSSProvider(self):
+        return self.select('NewsProvider')
+
     #Read articles
     def readArticles(self):
-        r = self.persistSelect('Articles')
+        r = self.select('Articles')
         print(r)
         return r
 
