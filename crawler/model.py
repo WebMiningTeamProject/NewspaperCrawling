@@ -1,11 +1,13 @@
 class NewsArticle:
 
-    def __init__(self, news_provider=None, source_uri=None, author=None, text=None):
+    def __init__(self, news_provider=None, source_uri=None, author=None, title=None, text=None):
         self.news_provider = news_provider
         # Suggested for PK as it should be identifying the article uniquely
         self.source_uri = source_uri
+        self.title = title
         self.text = text
         self.author = author
+        self.added_on
 
     def __str__(self):
         return 'Provider: %s , Author: %s, Source_URI: %s, Text: %s' \
@@ -16,6 +18,7 @@ class NewsArticle:
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
+
 
 class NewsProvider:
 
@@ -29,3 +32,23 @@ class NewsProvider:
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
+
+"""
+CREATE TABLE `NewsProvider` (
+ `name` VARCHAR(255) NOT NULL,
+  `rss_uri` varchar(511) NOT NULL,
+ PRIMARY KEY (`name`)
+);
+
+
+CREATE TABLE `NewsArticles` (
+ `source_uri` varchar(511) NOT NULL,
+ `NewsProvider_name` VARCHAR(255),
+ `text` TEXT DEFAULT NULL,
+ `title` varchar(300) DEFAULT NULL,
+ `author` varchar(300) DEFAULT NULL,
+ `added_on` date NOT NULL,
+ PRIMARY KEY (`source_uri`),
+FOREIGN KEY (`NewsProvider_name`) REFERENCES `NewsProvider` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
+);
+"""

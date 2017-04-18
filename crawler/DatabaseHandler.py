@@ -14,7 +14,7 @@ class DatabaseHandler:
         try:
             self.db = MySQLdb.connect(
                 host, user, password, db)
-             
+
             warnings.filterwarnings("error", category=MySQLdb.Warning)
             self.cnx = self.db.cursor()
             self.db.autocommit(False)
@@ -31,8 +31,8 @@ class DatabaseHandler:
         self.cnx.close()
         self.db.close()
         self.logger.debug('Closed DB connection')
-    
-    
+
+
 
     def __buildInsertSql(self, table, objs):
         if len(objs) == 0:
@@ -78,11 +78,11 @@ class DatabaseHandler:
                 sys.exit(1)
 
 
-    def persistInsert_dict(self, table, dict):
-        sql = self.__buildInsertSql(table, dict)
+    def persistInsert_dict(self, table, array_of_dicts):
+        sql = self.__buildInsertSql(table, array_of_dicts)
         self.__execute(sql)
         self.db.commit()
-    
+
     def persistSelect(self, table):
         sql = self.__buildSelectSql(table)
         resultSet = self.__execute(sql)
@@ -107,6 +107,7 @@ class DatabaseHandler:
         r = self.persistSelect('Articles')
         print(r)
         return r
+
 
 
 
