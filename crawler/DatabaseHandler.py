@@ -4,7 +4,7 @@ import warnings
 
 import MySQLdb
 import MySQLdb.cursors
-import _mysql
+
 
 
 
@@ -15,7 +15,7 @@ class DatabaseHandler:
             self.db = MySQLdb.connect(
                 host, user, password, db)
              
-            warnings.filterwarnings("error", category=_mysql.Warning)
+            warnings.filterwarnings("error", category=MySQLdb.Warning)
             self.cnx = self.db.cursor()
             self.db.autocommit(False)
             self.logger.debug(
@@ -57,32 +57,17 @@ class DatabaseHandler:
 
 
     ##Build select satement without constraints
-    def buidlSelectSql(self,databaseName, tableName):
+    def __buildSelectSql(self,tableName):
         statement = 'SELECT * FROM`' + tableName + ';'
-        resultSet = self.__execute(databaseName, statement)
+        resultSet = self.__execute(statement)
         return resultSet;
 
+    #Execute SQL-statement
     def __execute(self, statement):
         if statement:
             try:
                 self.logger.debug('Executing SQL-query:\n\t%s'
                                   % statement.replace('\n', '\n\t'))
-                self.db.select_db(databaseName)
-                self.cnx.execute(statement)
-            except MySQLdb.Warning as e:
-                self.logger.warn("Warning while executing statement: %s" % e)
-            except MySQLdb.Error as e:
-                self.logger.error("Error while executing statement [%d]: %s"
-                                  % (e.args[0], e.args[1]))
-                self.close()
-                sys.exit(1)
-
-    def __execute(self, databaseName, statement):
-        if statement:
-            try:
-                self.logger.debug('Executing SQL-query:\n\t%s'
-                              % statement.replace('\n', '\n\t'))
-                self.db.select_db(databaseName)
                 self.cnx.execute(statement)
             except MySQLdb.Warning as e:
                 self.logger.warn("Warning while executing statement: %s" % e)
@@ -93,17 +78,23 @@ class DatabaseHandler:
                 sys.exit(1)
 
 
-    def persist_dict(self, table, dict):
+    def persistInsert_dict(self, table, dict):
         sql = self.__buildInsertSql(table, dict)
         self.__execute(sql)
         self.db.commit()
+    
+    def persistSelect(self, table):
+        sql = self.__buildSelectSql(table)
+        resultSet = self.__execute(sql)
+        self.db.commit()
+        return resultSet
 
 
-    ##Get all RSSProvider
+    #Get all RSSProvider
     def readRSSProvider(self):
-        return self.buidlSelectSql('webmining', 'NewsProvider')
+        return self.persistSelect('NewsProvider')
 
-    ##Insert RSSProvider
+    #Insert RSSProvider
     def insertRSSProvider(self, providerList):
         if len(providerList) == 0:
             return
@@ -111,10 +102,11 @@ class DatabaseHandler:
         self.__execute(statement)
         self.logger.debug('Executed SQL-query:\n\t%s'
                             % statement.replace('\n', '\n\t'))
-
     #Read articles
     def readArticles(self):
-        return self.buidlSelectSql('webmining', 'Articles')
+        r = self.persistSelect('Articles')
+        print(r)
+        return r
 
 
 

@@ -15,3 +15,5 @@ NewsProviderId
 text
 
 author
+
+addedOn
