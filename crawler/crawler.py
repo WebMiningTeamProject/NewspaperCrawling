@@ -1,76 +1,80 @@
-#! /usr/bin/env python3
-
-import os
-import sys
-import logging
-import configparser
-import argparse
-from DatabaseHandler import DatabaseHandler
-
-LOGGER = logging.getLogger()
+import threading
+import queue
+from model import NewsArticle, NewsProvider
+import feedparser
+import itertools
+from requests import get
+from newspaper import Article as RawArticle
 
 
-def parse_args():
+
+MAX_RSSFETCHER_THREADS = 3
+MAX_FETCHER_THREADS = 6
+STOP_SIG = threading.Event()
+
+
+class ArticleUriFetcher(threading.Thread):
+
+    def run(self, news_provider_queue, result_queue):
+        while not news_provider_queue.empty():
+            news_provider = news_provider_queue.get()
+            # get the entries of the rss feed
+            entries = feedparser.parse(news_provider.rss_uri)['entries']
+            for entry in entries:
+                # get the link of each entry and create a news article for it
+                uri = entry.get('link')
+                news_article = NewsArticle(news_provider=news_provider, source_uri=uri)
+                # put the article in the queue to let it process by the ArticleFetcher
+                result_queue.put(news_article)
+            news_provider_queue.task_done()
+        STOP_SIG.set()
+
+
+class ArticleFetcher(threading.Thread):
+
+    def run(article_queue, dh):
+        while not (STOP_SIG.is_set() and article_queue.empty()):
+            article = article_queue.get()
+
+            raw = RawArticle(article.source_uri)
+            raw.download()
+            raw.parse()
+
+            article.author = raw.authors
+            article.text = raw.text
+
+            dh.persistNewsArticle(article)
+            article_queue.task_done()
+
+
+
+
+def get_articles_from_news_providers(news_providers, dh):
     """
-    initiates the argparseres and returns configpath gotten from parser
+    This will fetch the news providers rss feed and fetch the article uri. It will then download the article and persist it
+    :param news_providers: array of NewsProviders
     """
-    parser = argparse.ArgumentParser(
-        description='Crawls newspages', prog='crawler')
 
-    parser.add_argument(
-        '-c',
-        type=str,
-        nargs='?',
-        dest='config',
-        required=True,
-        help='path to configfile')
-    args = parser.parse_args()
-    return args.config
+    # Build the queues
+    news_provider_queue = queue.Queue(news_providers)
+    # (news_provider_queue.put(np) for np in news_providers)
+    news_article_que = queue.Queue()
 
+    # create threads
+    rss_fetchers = [ArticleUriFetcher() for _ in itertools.repeat(None, MAX_RSSFETCHER_THREADS)]
+    article_fetchers = [ArticleFetcher() for _ in itertools.repeat(None, MAX_FETCHER_THREADS)]
 
-def load_config(config_file):
-    """
-    Loads config from config file and returns it
-    """
-    cparser = configparser.ConfigParser()
-    try:
-        cparser.read(config_file)
-        return cparser
-    except Exception as exc:
-        print(exc)
-        sys.exit(1)
+    # run threads
+    for rss_fetcher in rss_fetchers:
+        rss_fetcher.run(news_provider_queue, news_article_que)
 
+    for article_fetcher in article_fetchers:
+        article_fetcher.run(news_article_que, dh)
 
-def init_logging(log_path):
-    """
-    This will initiate the logging by setting the loglevel and creating the logfile.
-    """
-    LOGGER.setLevel(logging.INFO)
-    try:
-        file_log_handler = logging.FileHandler(log_path)
-    except FileNotFoundError as err:
-        print(err)
-        sys.exit(1)
-    formatter = logging.Formatter('%(levelname)s %(asctime)s %(message)s')
-    file_log_handler.setFormatter(formatter)
-    LOGGER.addHandler(file_log_handler)
-    LOGGER.addHandler(file_log_handler)
+    # join the rss fetchers
+    for thread in rss_fetchers:
+        thread.join()
 
-
-def main():
-    os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    config_file = parse_args()
-    conf = load_config(config_file)
-    init_logging(conf['DEFAULT']['LogPath'])
-    dh = DatabaseHandler(
-        host=conf['DATABASE']['Host'],
-        user=conf['DATABASE']['User'],
-        password=conf['DATABASE']['Password'],
-        db= conf['DATABASE']['DB']
-    )
-
-
-
-
-if __name__ == '__main__':
-    main()
+    # join the article_fetchers
+    for thread in article_fetchers:
+        thread.join()
