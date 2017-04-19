@@ -7,7 +7,7 @@ class NewsArticle:
         self.title = title
         self.text = text
         self.author = author
-        self.added_on
+        self.added_on = None
 
     def __str__(self):
         return 'Provider: %s , Author: %s, Source_URI: %s, Text: %s' \
@@ -43,12 +43,12 @@ CREATE TABLE `NewsProvider` (
 
 CREATE TABLE `NewsArticles` (
  `source_uri` varchar(511) NOT NULL,
- `NewsProvider_name` VARCHAR(255),
+ `news_provider` VARCHAR(255),
  `text` TEXT DEFAULT NULL,
  `title` varchar(300) DEFAULT NULL,
  `author` varchar(300) DEFAULT NULL,
  `added_on` date NOT NULL,
  PRIMARY KEY (`source_uri`),
-FOREIGN KEY (`NewsProvider_name`) REFERENCES `NewsProvider` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
+FOREIGN KEY (`news_provider`) REFERENCES `NewsProvider` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
 );
 """
