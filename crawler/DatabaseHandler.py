@@ -5,6 +5,7 @@ import warnings
 import MySQLdb
 import MySQLdb.cursors
 
+from model import NewsProvider
 
 
 
@@ -13,7 +14,7 @@ class DatabaseHandler:
         self.logger = logging.getLogger()
         try:
             self.db = MySQLdb.connect(
-                host, user, password, db)
+                host, user, password, db, cursorclass=MySQLdb.cursors.DictCursor)
 
             warnings.filterwarnings("error", category=MySQLdb.Warning)
             self.cnx = self.db.cursor()
@@ -46,7 +47,7 @@ class DatabaseHandler:
                 values = []
                 for key in columns:
                     try:
-                        values.append('"%s"' % str(item[key]) if not item[key] == '' else 'NULL')
+                        values.append('"%s"' % str(item[key]).replace('"', "") if not item[key] == '' else 'NULL')
                     except KeyError:
                         values.append('NULL')
                 if not all('NULL' == value for value in values):
@@ -59,8 +60,7 @@ class DatabaseHandler:
     ##Build select satement without constraints
     def __buildSelectSql(self,tableName):
         statement = 'SELECT * FROM`' + tableName + ';'
-        resultSet = self.__execute(statement)
-        return resultSet;
+        return statement;
 
     #Execute SQL-statement
     def __execute(self, statement):
@@ -69,6 +69,7 @@ class DatabaseHandler:
                 self.logger.debug('Executing SQL-query:\n\t%s'
                                   % statement.replace('\n', '\n\t'))
                 self.cnx.execute(statement)
+                return self.cnx.fetchall()
             except MySQLdb.Warning as e:
                 self.logger.warn("Warning while executing statement: %s" % e)
             except MySQLdb.Error as e:
@@ -86,7 +87,6 @@ class DatabaseHandler:
     def select(self, table):
         sql = self.__buildSelectSql(table)
         resultSet = self.__execute(sql)
-        self.db.commit()
         return resultSet
 
     def persistNewsProviders(self, providerList):
@@ -102,17 +102,18 @@ class DatabaseHandler:
         This function persists NewsArticles
         :param article: a single NewsArticles
         """
-        self.persistDict('NewsArticle', [article.__dict__ ])
+        self.persistDict('NewsArticles', [article.__dict__ ])
 
     # Get all RSSProvider
-    def readRSSProvider(self):
-        return self.select('NewsProvider')
+    def readNewsProvider(self):
+        result_set = self.select('NewsProvider')
+        return [NewsProvider(name=item['name'], rss_uri=item['rss_uri']) for item in result_set]
 
     #Read articles
     def readArticles(self):
-        r = self.select('Articles')
-        print(r)
-        return r
+        result_set = self.select('Articles')
+        # create array of article objects
+        return
 
 
 
