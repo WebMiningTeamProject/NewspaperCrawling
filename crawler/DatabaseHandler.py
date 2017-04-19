@@ -89,8 +89,7 @@ class DatabaseHandler:
         self.db.commit()
         return resultSet
 
-
-    def persistNewsProvider(self, providerList):
+    def persistNewsProviders(self, providerList):
         """
         This function persists NewsProviders
         :param providerList: an array of NewsProviders
@@ -98,13 +97,12 @@ class DatabaseHandler:
         if not len(providerList) == 0:
             self.persistDict('NewsProvider', [provider.__dict__ for provider in providerList])
 
-    def persistNewsArticle(self, articleList):
+    def persistNewsArticle(self, article):
         """
         This function persists NewsArticles
-        :param articleList: an array of NewsArticles
+        :param article: a single NewsArticles
         """
-        if not len(articleList) == 0:
-            self.persistDict('NewsArticle', [article.__dict__ for article in articleList])
+        self.persistDict('NewsArticle', [article.__dict__ ])
 
     # Get all RSSProvider
     def readRSSProvider(self):
