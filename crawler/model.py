@@ -47,7 +47,7 @@ CREATE TABLE `NewsArticles` (
  `text` TEXT DEFAULT NULL,
  `title` varchar(300) DEFAULT NULL,
  `author` varchar(300) DEFAULT NULL,
- `added_on` date NOT NULL,
+ `added_on` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
  PRIMARY KEY (`source_uri`),
 FOREIGN KEY (`news_provider`) REFERENCES `NewsProvider` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION
 );
