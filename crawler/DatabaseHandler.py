@@ -1,6 +1,7 @@
 import logging
 import sys
 import warnings
+import threading
 
 import MySQLdb
 import MySQLdb.cursors
@@ -10,18 +11,28 @@ from model import NewsProvider
 
 
 class DatabaseHandler:
-    def __init__(self, host, user, password, db):
+    def __init__(self, host, user, password, db_name):
+        self.host = host
+        self.user = user
+        self.password = password
+        self.db_name = db_name
         self.logger = logging.getLogger()
+        self.cnx = None
+        self.db = None
+        self.connect()
+        self.condition = threading.Condition()
+
+    def connect(self):
         try:
             self.db = MySQLdb.connect(
-                host, user, password, db, cursorclass=MySQLdb.cursors.DictCursor)
+                self.host, self.user, self.password, self.db_name, cursorclass=MySQLdb.cursors.DictCursor, charset='utf8')
 
             warnings.filterwarnings("error", category=MySQLdb.Warning)
             self.cnx = self.db.cursor()
-            self.db.autocommit(False)
+            self.db.autocommit(True)
             self.logger.debug(
                 'Connected to database %s on %s with user %s' %
-                (db, host, user))
+                (self.db_name, self.host, self.user))
         except MySQLdb.Error as e:
             self.logger.error(
                 "Error while establishing connection to the database server [%d]: %s"
@@ -65,24 +76,21 @@ class DatabaseHandler:
     #Execute SQL-statement
     def __execute(self, statement):
         if statement:
-            try:
-                self.logger.debug('Executing SQL-query:\n\t%s'
-                                  % statement.replace('\n', '\n\t'))
-                self.cnx.execute(statement)
-                return self.cnx.fetchall()
-            except MySQLdb.Warning as e:
-                self.logger.warn("Warning while executing statement: %s" % e)
-            except MySQLdb.Error as e:
-                self.logger.error("Error while executing statement [%d]: %s"
-                                  % (e.args[0], e.args[1]))
-                self.close()
-                sys.exit(1)
-
+            with self.condition:
+                try:
+                    self.logger.debug('Executing SQL-query:\n\t%s'
+                                      % statement.replace('\n', '\n\t'))
+                    self.cnx.execute(statement)
+                    return self.cnx.fetchall()
+                except MySQLdb.Warning as e:
+                    self.logger.warn("Warning while executing statement: %s" % e)
+                except MySQLdb.Error as e:
+                    self.logger.error("Error while executing statement [%d]: %s"
+                                      % (e.args[0], e.args[1]))
 
     def persistDict(self, table, array_of_dicts):
         sql = self.__buildInsertSql(table, array_of_dicts)
         self.__execute(sql)
-        self.db.commit()
 
     def select(self, table):
         sql = self.__buildSelectSql(table)
