@@ -7,7 +7,6 @@ class NewsArticle:
         self.title = title
         self.text = text
         self.author = author
-        self.added_on = None
 
     def __str__(self):
         return 'Provider: %s , Author: %s, Source_URI: %s, Text: %s' \
