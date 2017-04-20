@@ -27,7 +27,6 @@ def crawl_rss(news_provider_queue, result_queue):
             # put the article in the queue to let it process by the ArticleFetcher
             result_queue.put(news_article)
         news_provider_queue.task_done()
-    STOP_SIG.set()
 
 
 def crawl_article(article_queue, dh):
@@ -68,12 +67,14 @@ def get_articles_from_news_providers(news_providers, dh):
     for rss_fetcher in rss_fetchers:
         rss_fetcher.start()
 
+
     for article_fetcher in article_fetchers:
         article_fetcher.start()
 
     # join the rss fetchers
     for thread in rss_fetchers:
         thread.join()
+    STOP_SIG.set()
 
     # join the article_fetchers
     for thread in article_fetchers:
