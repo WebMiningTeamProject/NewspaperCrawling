@@ -1,17 +1,15 @@
 import threading
 import queue
-from model import NewsArticle, NewsProvider
 import feedparser
 import itertools
-from requests import get
-from newspaper import Article as RawArticle
 
+from newspaper import Article as RawArticle
+from model import NewsArticle
 
 
 MAX_RSSFETCHER_THREADS = 3
 MAX_FETCHER_THREADS = 6
 STOP_SIG = threading.Event()
-
 
 
 def crawl_rss(news_provider_queue, result_queue):
@@ -42,7 +40,6 @@ def crawl_article(article_queue, dh):
 
         dh.persistNewsArticle(article)
         article_queue.task_done()
-
 
 
 
