@@ -7,8 +7,8 @@ from newspaper import Article as RawArticle
 from model import NewsArticle
 
 
-MAX_RSSFETCHER_THREADS = 3
-MAX_FETCHER_THREADS = 6
+MAX_RSSFETCHER_THREADS = 1
+MAX_FETCHER_THREADS = 2
 STOP_SIG = threading.Event()
 
 
@@ -35,6 +35,7 @@ def crawl_article(article_queue, dh):
         raw.download()
         raw.parse()
 
+        article.title = raw.title
         article.author = raw.authors
         article.text = raw.text
 
