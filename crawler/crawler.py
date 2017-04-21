@@ -7,8 +7,8 @@ from newspaper import Article as RawArticle
 from model import NewsArticle
 
 
-MAX_RSSFETCHER_THREADS = 1
-MAX_FETCHER_THREADS = 2
+MAX_RSSFETCHER_THREADS = 3
+MAX_FETCHER_THREADS = 20
 STOP_SIG = threading.Event()
 
 
