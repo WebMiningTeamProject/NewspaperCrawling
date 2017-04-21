@@ -3,7 +3,7 @@ import queue
 import feedparser
 import itertools
 
-from newspaper import Article as RawArticle
+from newspaper import Article as RawArticle, ArticleException
 from model import NewsArticle
 
 
@@ -33,14 +33,17 @@ def crawl_article(article_queue, dh):
 
         raw = RawArticle(article.source_uri)
         raw.download()
-        raw.parse()
+        try:
+            raw.parse()
+            article.title = raw.title
+            article.author = raw.authors
+            article.text = raw.text
 
-        article.title = raw.title
-        article.author = raw.authors
-        article.text = raw.text
-
-        dh.persistNewsArticle(article)
-        article_queue.task_done()
+            dh.persistNewsArticle(article)
+        except ArticleException:
+            pass
+        finally:
+            article_queue.task_done()
 
 
 
