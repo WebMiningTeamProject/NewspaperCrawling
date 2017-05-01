@@ -123,17 +123,13 @@ class DatabaseHandler:
         # create array of article objects
         return
 
-
-
-
-#Main Method - For Testing
-def main():
-    print("main code")
-    handler = DatabaseHandler("ec2-52-57-13-180.eu-central-1.compute.amazonaws.com", "webmining", "asN5O$YVZch-$vyFEN^*", "webmining")
-    handler.readRSSProvider()
-    handler.readArticles()
-
-if __name__ == "__main__":main()
+    def getProcessedUri(self):
+        result = self.__execute('SELECT source_uri FROM NewsArticles')
+        processed_uris = set()
+        for d in result:
+            for v in d.values():
+                processed_uris.add(v)
+        return processed_uris
 
 
 
