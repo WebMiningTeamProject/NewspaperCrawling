@@ -47,7 +47,7 @@ def init_logging(log_path):
     """
     This will initiate the logging by setting the loglevel and creating the logfile.
     """
-    LOGGER.setLevel(logging.WARNING)
+    LOGGER.setLevel(logging.DEBUG)
     try:
         file_log_handler = logging.FileHandler(log_path)
     except FileNotFoundError as err:
@@ -82,9 +82,6 @@ def main():
         password=conf['DATABASE']['Password'],
         db_name=conf['DATABASE']['DB']
     )
-
-    #CNN = NewsProvider('CNN_US', 'http://rss.cnn.com/rss/edition_us.rss')
-    #dh.persistNewsProviders([CNN])
 
     np = dh.readNewsProvider()
 
