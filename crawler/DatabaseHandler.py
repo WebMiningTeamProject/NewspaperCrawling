@@ -25,7 +25,7 @@ class DatabaseHandler:
     def connect(self):
         try:
             self.db = MySQLdb.connect(
-                self.host, self.user, self.password, self.db_name, cursorclass=MySQLdb.cursors.DictCursor, charset='utf8')
+                self.host, self.user, self.password, self.db_name, cursorclass=MySQLdb.cursors.DictCursor, charset='utf8', init_command='SET NAMES UTF8')
 
             warnings.filterwarnings("error", category=MySQLdb.Warning)
             self.cnx = self.db.cursor()
@@ -123,6 +123,13 @@ class DatabaseHandler:
         # create array of article objects
         return
 
+    def getProcessedUri(self):
+        result = self.__execute('SELECT source_uri FROM NewsArticles')
+        processed_uris = set()
+        for d in result:
+            for v in d.values():
+                processed_uris.add(v)
+        return processed_uris
 
 
 
@@ -133,7 +140,7 @@ def main():
     handler.readRSSProvider()
     handler.readArticles()
 
-if __name__ == "__main__":main()
+if __name__ == "__main__": main()
 
 
 
