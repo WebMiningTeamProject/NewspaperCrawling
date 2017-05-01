@@ -123,13 +123,6 @@ class DatabaseHandler:
         # create array of article objects
         return
 
-    def getProcessedUri(self):
-        result = self.__execute('SELECT source_uri FROM NewsArticles')
-        processed_uris = set()
-        for d in result:
-            for v in d.values():
-                processed_uris.add(v)
-        return processed_uris
 
 
 
@@ -140,7 +133,7 @@ def main():
     handler.readRSSProvider()
     handler.readArticles()
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":main()
 
 
 
